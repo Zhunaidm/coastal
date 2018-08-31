@@ -6,7 +6,7 @@ plugins {
 	id 'checkstyle'
 }
 
-mainClassName = 'za.ac.sun.cs.coastal.COASTAL'
+mainClassName = 'za.ac.sun.cs.coastal.JAFL'
 
 repositories {
 	jcenter()
