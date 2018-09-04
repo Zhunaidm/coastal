@@ -46,6 +46,7 @@ public class DB {
         Scanner sc = new Scanner(new File(args[0]));
         String word = sc.next();
         sc.close();
+        System.out.println("Initial Word: " + word);
         int r = analyse(word);
     }
 }

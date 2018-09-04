@@ -30,6 +30,7 @@ import java.util.Set;
 
 import za.ac.sun.cs.coastal.ConfigurationBuilder;
 import za.ac.sun.cs.coastal.reporting.ReporterManager;
+import za.ac.sun.cs.coastal.TestLogger;
 
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -66,7 +67,6 @@ public class JAFL {
     private static ByteSet crashingInputs = new ByteSet();
 
     public static void main(String[] args) throws Exception {
-        System.out.println("KLFHSJHSBKDNJHBWLKHNJFHJ");
         if (args.length == 3) {
             System.out.println(args[2]);
             if (args[2].equals("-b")) {
@@ -87,7 +87,10 @@ public class JAFL {
         byte[] base = Files.readAllBytes(path);
         if (concolicMode) {
             runCoastal(base);
+            System.out.println("COASTAL RAN SUCCESSFULLY");
+
         }
+
         SystemExitControl.forbidSystemExitCall();
         Data.resetAll();
         execProgram(base);
@@ -234,17 +237,23 @@ public class JAFL {
     private static void runCoastal(byte[] input) throws Exception {
         // Currently hardcoded to Deadbeef example.
         storeInputFile(input);
+        final Logger log = new TestLogger();
         final Properties props = new Properties();
-        props.setProperty("coastal.main", "tests.strings.DB");
-        props.setProperty("coastal.targets", "tests.strings");
-        props.setProperty("coastal.triggers", "tests.strings.DB.analyse(X: String)");
+        props.setProperty("coastal.main", "examples.strings.DB");
+        props.setProperty("coastal.targets", "examples.strings");
+        props.setProperty("coastal.triggers", "examples.strings.DB.analyse(X: String)");
+        props.setProperty("coastal.delegates", "java.lang.String:za.ac.sun.cs.coastal.model.String");
+        props.setProperty("coastal.listeners", "za.ac.sun.cs.coastal.listener.control.StopController");
         props.setProperty("coastal.strategy", "za.ac.sun.cs.coastal.strategy.JAFLStrategy");
+        props.setProperty("coastal.echooutput", "true");
+
         final String version = "coastal-test";
         final ReporterManager reporterManager = new ReporterManager();
-        ConfigurationBuilder cb = new ConfigurationBuilder(null, version, reporterManager);
+        ConfigurationBuilder cb = new ConfigurationBuilder(log, version, reporterManager);
         cb.readFromProperties(props);
         cb.setArgs(".temp");
-        new COASTAL(cb.construct()).start();
+        Configuration config = cb.construct();
+        new COASTAL(config).start();
     }
 
     private static void storeInputFile(byte[] input) throws Exception {

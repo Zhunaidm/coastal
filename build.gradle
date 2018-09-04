@@ -3,7 +3,7 @@ plugins {
 	id 'java'
 	id 'eclipse'
 	id 'com.palantir.git-version' version '0.12.0-rc2'
-	id 'checkstyle'
+	//id 'checkstyle'
 }
 
 mainClassName = 'za.ac.sun.cs.coastal.JAFL'
@@ -24,9 +24,9 @@ dependencies {
 	testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
-checkstyle {
-	toolVersion '8.1'
-}
+//checkstyle {
+//	toolVersion '8.1'
+//}
 
 version = gitVersion()
 processResources {

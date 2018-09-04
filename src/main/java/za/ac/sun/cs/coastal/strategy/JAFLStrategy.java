@@ -77,10 +77,11 @@ public class JAFLStrategy implements Strategy, ConfigurationListener {
 	@Override
 	public Map<String, Constant> refine(SymbolicState symbolicState) {
 		long t0 = System.currentTimeMillis();
+		System.out.println("BEGIN REFINEMENT.....");
 		List<Map<String, Constant>> refinement = refine0(symbolicState);
 		totalTime += System.currentTimeMillis() - t0;
 		//return refinement;
-		System.out.println("Printing input options");
+		System.out.println("Printing input options: " + refinement.size());
 		for (Map<String, Constant> entry : refinement) {
 			System.out.println("Input -> ");
 			for (Map.Entry<String, Constant> e : entry.entrySet()) {
@@ -203,7 +204,7 @@ public class JAFLStrategy implements Strategy, ConfigurationListener {
 
 	@Override
 	public String getName() {
-		return "RandomStrategy";
+		return "JAFLStrategy";
 	}
 
 	@Override
