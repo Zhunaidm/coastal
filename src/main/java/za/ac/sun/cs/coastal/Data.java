@@ -18,7 +18,7 @@ public class Data {
     private static Map<Tuple, Integer> localBuckets;
     private static Map<ByteArrayWrapper, ArrayList<Tuple>> inputTuples = new HashMap<ByteArrayWrapper, ArrayList<Tuple>>();
     private static Map<ByteArrayWrapper, Integer> worstCaseScores = new HashMap<ByteArrayWrapper, Integer>();
-    private static Queue<Byte[]> coastalInputs = new LinkedList<Byte[]>();
+    private static ArrayList<Byte[]> coastalInputs = new ArrayList<Byte[]>();
     private static String prevBranch = "Source";
     private static byte[] currentInput = null;
     private static boolean newTuple = false;
@@ -261,6 +261,10 @@ public class Data {
 
     public static void addCoastalInput(Byte[] input) {
         coastalInputs.add(input);
+    }
+
+    public static ArrayList<Byte[]> getCoastalInputs() {
+        return coastalInputs;
     }
 
     public enum bucket {

@@ -1,6 +1,7 @@
 package za.ac.sun.cs.coastal.strategy;
 
 import java.io.PrintWriter;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -9,11 +10,13 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
+import java.util.ArrayList;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import za.ac.sun.cs.coastal.Configuration;
+import za.ac.sun.cs.coastal.Data;
 import za.ac.sun.cs.coastal.listener.ConfigurationListener;
 import za.ac.sun.cs.coastal.symbolic.SegmentedPC;
 import za.ac.sun.cs.coastal.symbolic.SymbolicState;
@@ -80,13 +83,16 @@ public class JAFLStrategy implements Strategy, ConfigurationListener {
 		System.out.println("BEGIN REFINEMENT.....");
 		List<Map<String, Constant>> refinement = refine0(symbolicState);
 		totalTime += System.currentTimeMillis() - t0;
-		//return refinement;
+		// return refinement;
 		System.out.println("Printing input options: " + refinement.size());
 		for (Map<String, Constant> entry : refinement) {
 			System.out.println("Input -> ");
+			ArrayList<Byte> baos = new ArrayList<Byte>();
 			for (Map.Entry<String, Constant> e : entry.entrySet()) {
 				System.out.println(e.getKey() + " -> " + e.getValue());
+				baos.add((byte) Integer.parseInt(e.getValue().toString()));
 			}
+			Data.addCoastalInput(baos.toArray(new Byte[baos.size()]));
 		}
 		return null;
 	}
@@ -96,7 +102,7 @@ public class JAFLStrategy implements Strategy, ConfigurationListener {
 		long t;
 		SegmentedPC spc = symbolicState.getSegmentedPathCondition();
 		log.info("explored <{}> {}", spc.getSignature(), spc.getPathCondition().toString());
-		//return null;
+		// return null;
 		boolean infeasible = false;
 		while (true) {
 			if (--pathLimit < 0) {
@@ -139,15 +145,15 @@ public class JAFLStrategy implements Strategy, ConfigurationListener {
 				String modelString = newModel.toString();
 				modelExtractionTime += System.currentTimeMillis() - t;
 				log.info("new model: {}", modelString);
-				
+
 				if (visitedModels.add(modelString)) {
-					//return newModel;
+					// return newModel;
 					list.add(newModel);
 				} else {
 					log.info("model {} has been visited before, retrying", modelString);
 				}
-				
-			}			
+
+			}
 		}
 	}
 

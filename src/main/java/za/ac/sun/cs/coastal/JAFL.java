@@ -91,6 +91,17 @@ public class JAFL {
 
         }
 
+        ArrayList<Byte[]> coastalInputs = Data.getCoastalInputs();
+
+        for (Byte[] input : coastalInputs) {
+            System.out.print("Coastal input: ");
+
+            for (Byte b : input) {
+                System.out.print(" " + b.byteValue());
+            }
+            System.out.println();
+        }
+
         SystemExitControl.forbidSystemExitCall();
         Data.resetAll();
         execProgram(base);
@@ -245,6 +256,7 @@ public class JAFL {
         props.setProperty("coastal.delegates", "java.lang.String:za.ac.sun.cs.coastal.model.String");
         props.setProperty("coastal.listeners", "za.ac.sun.cs.coastal.listener.control.StopController");
         props.setProperty("coastal.strategy", "za.ac.sun.cs.coastal.strategy.JAFLStrategy");
+        props.setProperty("green.z3.path", "/home/zhunaid/z3/z3-4.7.1-x64-ubuntu-16.04/bin/z3");
         props.setProperty("coastal.echooutput", "true");
 
         final String version = "coastal-test";
