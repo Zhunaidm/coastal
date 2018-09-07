@@ -3,6 +3,9 @@ package examples.strings;
 import java.io.*;
 import java.util.*;
 
+import za.ac.sun.cs.coastal.Data;
+import za.ac.sun.cs.coastal.JAFL;
+
 public class DB {
 
     public static int analyse(String word) {
@@ -46,7 +49,6 @@ public class DB {
         Scanner sc = new Scanner(new File(args[0]));
         String word = sc.nextLine();
         sc.close();
-        System.out.println("Initial Word: " + word);
         int r = analyse(word);
     }
 }

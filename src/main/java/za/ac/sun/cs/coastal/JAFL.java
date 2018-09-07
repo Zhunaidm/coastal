@@ -51,6 +51,7 @@ public class JAFL {
     private static boolean abort = false;
     private static Class<?> cls;
     private static String className;
+    private static String initialClassName;
     private static int noWorstInputs = 0;
     private static int paths = 0;
     private static int totalPaths = 0;
@@ -76,7 +77,11 @@ public class JAFL {
             }
         }
 
-        className = args[0];
+        initialClassName = args[0];
+        className = initialClassName + "2";
+        // Instrument Code
+
+        Instrumenter.instrument(initialClassName, className);
         (new Thread(new FuzzUI())).start();
 
         file = args[1];
@@ -85,22 +90,6 @@ public class JAFL {
         queue = new LinkedList<Input>();
         Path path = Paths.get(file);
         byte[] base = Files.readAllBytes(path);
-        if (concolicMode) {
-            runCoastal(base);
-            System.out.println("COASTAL RAN SUCCESSFULLY");
-
-        }
-
-        ArrayList<Byte[]> coastalInputs = Data.getCoastalInputs();
-
-        for (Byte[] input : coastalInputs) {
-            System.out.print("Coastal input: ");
-
-            for (Byte b : input) {
-                System.out.print(" " + b.byteValue());
-            }
-            System.out.println();
-        }
 
         SystemExitControl.forbidSystemExitCall();
         Data.resetAll();
@@ -153,6 +142,47 @@ public class JAFL {
 
             if (runNumber % 5 == 0) {
                 cullQueue();
+            }
+
+            // Run Coastal
+            if (concolicMode && runNumber != 0 && runNumber % 100 == 0) {
+
+                runCoastal(basic);
+
+                System.out.println("COASTAL RAN SUCCESSFULLY");
+                System.out.println("Base Input: " + new String(basic));
+
+                System.out.println();
+                System.out.println("--------------------------------------------");
+                ArrayList<Byte[]> coastalInputs = Data.getCoastalInputs();
+
+                for (Byte[] cInput : coastalInputs) {
+                    System.out.print("Coastal input: ");
+                    byte[] word = new byte[cInput.length];
+                    int i = 0;
+
+                    for (Byte b : cInput) {
+                        System.out.print(" " + b.byteValue());
+                        word[i++] = b.byteValue();
+                    }
+                    System.out.println(" Word: " + new String(word));
+                    System.out.println();
+
+                    // Execute program with the Coastal input
+                    System.out.println("Executing input...");
+                    execProgram(word);
+                    System.out.println("Is New? :" + Data.getNew());
+                    if (Data.getNew()) {
+                        System.out.println("IT'S NEW");
+                        int inputScore = Data.getLocalBucketSize();
+                        queue.add(new Input(Arrays.copyOf(word, word.length), false, inputScore));
+                        Data.resetTuples();
+                        paths++;
+                    }
+                }
+                System.out.println("--------------------------------------------");
+                Data.clearCoastalInputs();
+
             }
 
         }
@@ -257,7 +287,7 @@ public class JAFL {
         props.setProperty("coastal.listeners", "za.ac.sun.cs.coastal.listener.control.StopController");
         props.setProperty("coastal.strategy", "za.ac.sun.cs.coastal.strategy.JAFLStrategy");
         props.setProperty("green.z3.path", "/home/zhunaid/z3/z3-4.7.1-x64-ubuntu-16.04/bin/z3");
-        props.setProperty("coastal.echooutput", "true");
+        props.setProperty("coastal.echooutput", "false");
 
         final String version = "coastal-test";
         final ReporterManager reporterManager = new ReporterManager();
@@ -580,11 +610,11 @@ public class JAFL {
     }
 
     public static void arithDec(byte[] base) throws Exception {
-        // 1 Byte deccrement
+        // 1 Byte decrement
+
         for (int i = 1; i <= ARITH_MAX; i++) {
             for (int j = 0; j < base.length; j++) {
                 base[j] = (byte) (base[j] - i);
-
                 execProgram(base);
                 if (Data.getNew()) {
                     int score = Data.getLocalBucketSize();
@@ -596,6 +626,7 @@ public class JAFL {
             }
         }
         // 2 Byte decrement
+
         for (int i = 1; i <= ARITH_MAX; i++) {
             for (int j = 0; j < base.length - 1; j++) {
                 base[j] = (byte) (base[j] - i);
@@ -613,6 +644,7 @@ public class JAFL {
             }
         }
         // 4 Byte decrement
+
         for (int i = 1; i <= ARITH_MAX; i++) {
             for (int j = 0; j < base.length - 3; j++) {
                 base[j] = (byte) (base[j] - i);

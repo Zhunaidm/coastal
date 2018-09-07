@@ -111,12 +111,14 @@ public class Data {
 
     public static void addTuple(String src, String dest) {
         Tuple tuple = new Tuple(src, dest);
+
         if (!src.equals("Source")) {
             branches.add(src);
         }
         if (!dest.equals("Source")) {
             branches.add(dest);
         }
+
         if (!tuples.containsKey(tuple) && !src.equals(dest)) {
             tuples.put(tuple, "");
             if (worstCaseMode) {
@@ -265,6 +267,10 @@ public class Data {
 
     public static ArrayList<Byte[]> getCoastalInputs() {
         return coastalInputs;
+    }
+
+    public static void clearCoastalInputs() {
+        coastalInputs.clear();
     }
 
     public enum bucket {

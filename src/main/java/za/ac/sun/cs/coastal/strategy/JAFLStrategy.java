@@ -4,6 +4,7 @@ import java.io.PrintWriter;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.TreeMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -86,9 +87,11 @@ public class JAFLStrategy implements Strategy, ConfigurationListener {
 		// return refinement;
 		System.out.println("Printing input options: " + refinement.size());
 		for (Map<String, Constant> entry : refinement) {
+			TreeMap<String, Constant> sortedMap = new TreeMap<String, Constant>();
+			sortedMap.putAll(entry);
 			System.out.println("Input -> ");
 			ArrayList<Byte> baos = new ArrayList<Byte>();
-			for (Map.Entry<String, Constant> e : entry.entrySet()) {
+			for (Map.Entry<String, Constant> e : sortedMap.entrySet()) {
 				System.out.println(e.getKey() + " -> " + e.getValue());
 				baos.add((byte) Integer.parseInt(e.getValue().toString()));
 			}
