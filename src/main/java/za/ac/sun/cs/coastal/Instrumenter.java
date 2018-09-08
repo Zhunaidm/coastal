@@ -21,14 +21,14 @@ public class Instrumenter {
     public static void instrument(String inputClassName, String outputClassName) throws Exception {
         // FileInputStream is = new FileInputStream(inputClassName);
         ClassReader cr = new ClassReader(inputClassName);
-        System.out.println("CW: " + cr.getClassName());
+        final String className =  outputClassName.replace('.', '/');
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         ClassAdapter ca = new ClassAdapter(cw, cr.getClassName());
         Remapper remapper = new Remapper() {
             @Override
             public String map(String typeName) {
-                if (typeName.equals("examples/strings/DB")) {
-                    return "examples/strings/DB2";
+                if (typeName.equals(cr.getClassName())) {
+                    return className;
                 }
 
                 return super.map(typeName);
@@ -38,10 +38,10 @@ public class Instrumenter {
 
         ClassRemapper adapter = new ClassRemapper(ca, remapper);
         cr.accept(adapter, ClassReader.EXPAND_FRAMES);
-        FileOutputStream fos = new FileOutputStream("build/classes/java/main/examples/strings/DB2.class");
+        FileOutputStream fos = new FileOutputStream("build/classes/java/main/" + className + ".class");
         fos.write(cw.toByteArray());
         fos.close();
-        BufferedWriter out = new BufferedWriter(new FileWriter(".branches", true));
+        BufferedWriter out = new BufferedWriter(new FileWriter(".branches", false)); // Only instrumenting a single class so append set to false.
         out.write(cr.getClassName() + ": " + Data.getCounter() + "\n");
         out.flush();
         out.close();

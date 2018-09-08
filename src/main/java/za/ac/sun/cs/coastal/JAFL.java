@@ -147,41 +147,45 @@ public class JAFL {
             // Run Coastal
             if (concolicMode && runNumber != 0 && runNumber % 100 == 0) {
 
-                runCoastal(basic);
+                for (Input qInput : new ArrayList<Input>(queue)) {
+                    byte[] fuzzInput = qInput.getData();
+                    runCoastal(fuzzInput);
 
-                System.out.println("COASTAL RAN SUCCESSFULLY");
-                System.out.println("Base Input: " + new String(basic));
+                    System.out.println("COASTAL RAN SUCCESSFULLY");
+                    System.out.println("Base Input: " + new String(basic));
 
-                System.out.println();
-                System.out.println("--------------------------------------------");
-                ArrayList<Byte[]> coastalInputs = Data.getCoastalInputs();
-
-                for (Byte[] cInput : coastalInputs) {
-                    System.out.print("Coastal input: ");
-                    byte[] word = new byte[cInput.length];
-                    int i = 0;
-
-                    for (Byte b : cInput) {
-                        System.out.print(" " + b.byteValue());
-                        word[i++] = b.byteValue();
-                    }
-                    System.out.println(" Word: " + new String(word));
                     System.out.println();
+                    System.out.println("--------------------------------------------");
+                    ArrayList<Byte[]> coastalInputs = Data.getCoastalInputs();
 
-                    // Execute program with the Coastal input
-                    System.out.println("Executing input...");
-                    execProgram(word);
-                    System.out.println("Is New? :" + Data.getNew());
-                    if (Data.getNew()) {
-                        System.out.println("IT'S NEW");
-                        int inputScore = Data.getLocalBucketSize();
-                        queue.add(new Input(Arrays.copyOf(word, word.length), false, inputScore));
-                        Data.resetTuples();
-                        paths++;
+                    for (Byte[] cInput : coastalInputs) {
+                        System.out.print("Coastal input: ");
+                        byte[] word = new byte[cInput.length];
+                        int i = 0;
+
+                        for (Byte b : cInput) {
+                            System.out.print(" " + b.byteValue());
+                            word[i++] = b.byteValue();
+                        }
+                        System.out.println(" Word: " + new String(word));
+                        System.out.println();
+
+                        // Execute program with the Coastal input
+                        System.out.println("Executing input...");
+                        execProgram(word);
+                        System.out.println("Is New? :" + Data.getNew());
+                        if (Data.getNew()) {
+                            System.out.println("IT'S NEW");
+                            int inputScore = Data.getLocalBucketSize();
+                            queue.add(new Input(Arrays.copyOf(word, word.length), false, inputScore));
+                            Data.resetTuples();
+                            paths++;
+                        }
                     }
+                    System.out.println("--------------------------------------------");
+                    Data.clearCoastalInputs();
+
                 }
-                System.out.println("--------------------------------------------");
-                Data.clearCoastalInputs();
 
             }
 
@@ -280,9 +284,9 @@ public class JAFL {
         storeInputFile(input);
         final Logger log = new TestLogger();
         final Properties props = new Properties();
-        props.setProperty("coastal.main", "examples.strings.DB");
+        props.setProperty("coastal.main", "examples.strings.MysteryFuzz");
         props.setProperty("coastal.targets", "examples.strings");
-        props.setProperty("coastal.triggers", "examples.strings.DB.analyse(X: String)");
+        props.setProperty("coastal.triggers", "examples.strings.MysteryFuzz.preserveSomeHtmlTagsAndRemoveWhitespaces(X: String)");
         props.setProperty("coastal.delegates", "java.lang.String:za.ac.sun.cs.coastal.model.String");
         props.setProperty("coastal.listeners", "za.ac.sun.cs.coastal.listener.control.StopController");
         props.setProperty("coastal.strategy", "za.ac.sun.cs.coastal.strategy.JAFLStrategy");
