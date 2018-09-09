@@ -81,18 +81,18 @@ public class JAFLStrategy implements Strategy, ConfigurationListener {
 	@Override
 	public Map<String, Constant> refine(SymbolicState symbolicState) {
 		long t0 = System.currentTimeMillis();
-		System.out.println("BEGIN REFINEMENT.....");
+		//System.out.println("BEGIN REFINEMENT.....");
 		List<Map<String, Constant>> refinement = refine0(symbolicState);
 		totalTime += System.currentTimeMillis() - t0;
 		// return refinement;
-		System.out.println("Printing input options: " + refinement.size());
+		//System.out.println("Printing input options: " + refinement.size());
 		for (Map<String, Constant> entry : refinement) {
 			TreeMap<String, Constant> sortedMap = new TreeMap<String, Constant>();
 			sortedMap.putAll(entry);
-			System.out.println("Input -> ");
+			//System.out.println("Input -> ");
 			ArrayList<Byte> baos = new ArrayList<Byte>();
 			for (Map.Entry<String, Constant> e : sortedMap.entrySet()) {
-				System.out.println(e.getKey() + " -> " + e.getValue());
+				//System.out.println(e.getKey() + " -> " + e.getValue());
 				baos.add((byte) Integer.parseInt(e.getValue().toString()));
 			}
 			Data.addCoastalInput(baos.toArray(new Byte[baos.size()]));
