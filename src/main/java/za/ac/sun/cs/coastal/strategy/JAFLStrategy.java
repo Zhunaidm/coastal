@@ -20,6 +20,7 @@ import za.ac.sun.cs.coastal.Configuration;
 import za.ac.sun.cs.coastal.Data;
 import za.ac.sun.cs.coastal.listener.ConfigurationListener;
 import za.ac.sun.cs.coastal.symbolic.SegmentedPC;
+import za.ac.sun.cs.coastal.symbolic.SegmentedPCIf;
 import za.ac.sun.cs.coastal.symbolic.SymbolicState;
 import za.ac.sun.cs.green.Green;
 import za.ac.sun.cs.green.Instance;
@@ -81,7 +82,7 @@ public class JAFLStrategy implements Strategy, ConfigurationListener {
 	@Override
 	public Map<String, Constant> refine(SymbolicState symbolicState) {
 		long t0 = System.currentTimeMillis();
-		//System.out.println("BEGIN REFINEMENT.....");
+		System.out.println("BEGIN REFINEMENT.....");
 		List<Map<String, Constant>> refinement = refine0(symbolicState);
 		totalTime += System.currentTimeMillis() - t0;
 		// return refinement;
@@ -100,7 +101,7 @@ public class JAFLStrategy implements Strategy, ConfigurationListener {
 		return null;
 	}
 
-	private List<Map<String, Constant>> refine0(SymbolicState symbolicState) {
+	private List<Map<String, Constant>> refine10(SymbolicState symbolicState) {
 		List<Map<String, Constant>> list = new LinkedList<Map<String, Constant>>();
 		long t;
 		SegmentedPC spc = symbolicState.getSegmentedPathCondition();
@@ -159,6 +160,61 @@ public class JAFLStrategy implements Strategy, ConfigurationListener {
 			}
 		}
 	}
+
+        private List<Map<String, Constant>> refine0(SymbolicState symbolicState) {
+                List<Map<String, Constant>> list = new LinkedList<Map<String, Constant>>();
+                long t;
+                SegmentedPC spc = symbolicState.getSegmentedPathCondition();
+                log.info("explored <{}> {}", spc.getSignature(), spc.getPathCondition().toString());
+                // generate new segmented pcs, all with one conjunct negated:
+                Set<SegmentedPC> altSpcs = new HashSet<>();
+                for (SegmentedPC pointer = spc; pointer != null; pointer = pointer.getParent()) {
+                        altSpcs.add(generateAltSpc(spc, pointer));
+                }
+                //return null;
+                boolean infeasible = false;
+                for (SegmentedPC thePC : altSpcs) {
+                        Expression pc = thePC.getPathCondition();
+                        String sig = spc.getSignature();
+                        log.info("trying   <{}> {}", sig, pc.toString());
+                        Instance instance = new Instance(green, null, pc);
+                        Map<IntVariable, IntConstant> model = (Map<IntVariable, IntConstant>) instance.request("model");
+                        if (model == null) {
+                                log.info("no model");
+                                log.trace("(The spc is {})", spc.getPathCondition().toString());
+                        } else {
+                                Map<String, Constant> newModel = new HashMap<>();
+                                for (IntVariable variable : model.keySet()) {
+                                        String name = variable.getName();
+                                        if (name.startsWith(SymbolicState.NEW_VAR_PREFIX)) {
+                                                continue;
+                                        }
+                                        Constant value = model.get(variable);
+                                        newModel.put(name, value);
+                                }
+                                String modelString = newModel.toString();
+                                log.info("new model: {}", modelString);
+                                if (visitedModels.add(modelString)) {
+                                        list.add(newModel);
+                                } else {
+                                        log.info("model {} has been visited before, retrying", modelString);
+                                }
+                        }
+                }
+                return list;
+        }
+
+        private SegmentedPC generateAltSpc(SegmentedPC spc, SegmentedPC pointer) {
+                SegmentedPC parent = null;
+                boolean value = ((SegmentedPCIf) spc).getValue();
+                if (spc == pointer) {
+                        parent = spc.getParent();
+                        value = !value;
+                } else {
+                        parent = generateAltSpc(spc.getParent(), pointer);
+                }
+                return new SegmentedPCIf(parent, spc.getExpression(), spc.getPassiveConjunct(), value);
+        }
 
 	// ======================================================================
 	//
