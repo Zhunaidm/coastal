@@ -306,7 +306,8 @@ public class JAFL {
         props.setProperty("coastal.delegates", "java.lang.String:za.ac.sun.cs.coastal.model.String");
         props.setProperty("coastal.listeners", "za.ac.sun.cs.coastal.listener.control.StopController");
         props.setProperty("coastal.strategy", "za.ac.sun.cs.coastal.strategy.JAFLStrategy");
-        props.setProperty("green.z3.path", "/home/zhunaid/z3/z3-4.7.1-x64-ubuntu-16.04/bin/z3");
+        //props.setProperty("green.z3.path", "/home/zhunaid/z3/z3-4.7.1-x64-ubuntu-16.04/bin/z3");
+        props.setProperty("green.z3.path", "/Users/visserw/Documents/tools/z3-master/bin/z3");
         props.setProperty("coastal.echooutput", "false");
 
         final String version = "coastal-test";
