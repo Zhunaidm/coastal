@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.File;
 
 import org.apache.logging.log4j.Logger;
+
 import org.apache.logging.log4j.LogManager;
 
 import java.io.FileOutputStream;
@@ -65,10 +66,13 @@ public class JAFL {
     private static int runNumber = 0;
     private static int runs = 0;
     private static boolean worstCaseMode = false;
-    private static boolean concolicMode = true;
+    private static boolean concolicMode = false;
     private static int currentOperation = 0;
     private static ByteSet crashingInputs = new ByteSet();
 
+    //For Mystery
+    //examples.strings.MysteryFuzz test_mystery.txt
+    //examples.strings.DB test.txt
     public static void main(String[] args) throws Exception {
         if (args.length == 3) {
             System.out.println(args[2]);
@@ -163,7 +167,8 @@ public class JAFL {
                             //DO NOTHING
                         }
                     }));*/
-                    runCoastal(fuzzInput);
+                    //runCoastal(fuzzInput);
+                    runCoastal(Arrays.copyOf(fuzzInput, fuzzInput.length + 5));
                     //System.setOut(original);
                     System.out.println("COASTAL RAN SUCCESSFULLY");
                     System.out.println("Base Input: " + new String(fuzzInput));
@@ -181,7 +186,9 @@ public class JAFL {
                             System.out.print(" " + b.byteValue());
                             word[i++] = b.byteValue();
                         }
+                       // word = new byte[] {60, 0, 32, 104, 82, 69, 70, 61, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0};
                         System.out.println(" Word: " + new String(word));
+                        
                         System.out.println();
 
                         // Execute program with the Coastal input
@@ -300,10 +307,16 @@ public class JAFL {
         storeInputFile(input);
         final Logger log = LogManager.getLogger("COASTAL");
         final Properties props = new Properties();
+        // MysteryFuzz
         props.setProperty("coastal.main", "examples.strings.MysteryFuzz");
         props.setProperty("coastal.targets", "examples.strings");
         props.setProperty("coastal.triggers", "examples.strings.MysteryFuzz.preserveSomeHtmlTagsAndRemoveWhitespaces(X: String)");
         props.setProperty("coastal.delegates", "java.lang.String:za.ac.sun.cs.coastal.model.String");
+        //DeadBeef
+        //props.setProperty("coastal.main", "examples.strings.DB");
+        //props.setProperty("coastal.targets", "examples.strings");
+        //props.setProperty("coastal.triggers", "examples.strings.DB.analyse(X: String)");
+        
         props.setProperty("coastal.listeners", "za.ac.sun.cs.coastal.listener.control.StopController");
         props.setProperty("coastal.strategy", "za.ac.sun.cs.coastal.strategy.JAFLStrategy");
         //props.setProperty("green.z3.path", "/home/zhunaid/z3/z3-4.7.1-x64-ubuntu-16.04/bin/z3");
@@ -915,18 +928,23 @@ public class JAFL {
                     base = removeByte(base, byteNum);
                     break;
                 case 13:
+                		base = CloningOrInserting(base);
                     // Clone or insert bytes.
+                		/*
                     if (rand.nextInt(4) == 0) {
                         // Insert constant bytes.
+                    	   System.out.println("Inserting");
                         byteNum = rand.nextInt(base.length);
                         base = addByte(base, (byte) (rand.nextInt(255) + 1), rand.nextInt(base.length + 1));
-
+                        
                     } else {
                         // Clone Bytes.
+                    	   System.out.println("Cloning");
                         byteNum = rand.nextInt(base.length);
                         base = addByte(base, base[byteNum], rand.nextInt(base.length + 1));
 
                     }
+                    */
                     break;
                 case 14:
                     // Overwrite bytes
@@ -962,6 +980,31 @@ public class JAFL {
             System.arraycopy(backup, 0, base, 0, backup.length);
         }
     }
+    
+	private static byte[] CloningOrInserting(byte[] base) {
+		// if things get too long lets stop this bus! This is super bad and needs to be configured
+		if (base.length > 20) return base;
+		//first figure out which one you want to do
+		Random rand = new Random();
+		boolean clone = (rand.nextInt(4)>0);
+		int blockSize = rand.nextInt(base.length); // how much you want to clone or insert
+		int blockStart = 0; // where do you start from
+		if (clone) {
+			blockStart = rand.nextInt(base.length-blockSize+1);
+		}
+		int newPos = rand.nextInt(base.length); // where are we putting the new stuff
+		byte[] newBase = new byte[base.length + blockSize];
+		System.arraycopy(base, 0, newBase, 0, newPos);
+		if (clone) {
+			System.arraycopy(base, blockStart, newBase, newPos, blockSize);
+		} else {
+			byte data = (byte)(rand.nextInt(256) -128);
+			Arrays.fill(newBase,newPos,newPos+blockSize,data);
+		}
+		System.arraycopy(base, newPos, newBase, newPos+blockSize, base.length-newPos);
+		//System.out.println("Cloning? "  + clone + (new String(newBase)));
+		return newBase;
+	}
 
 }
 
