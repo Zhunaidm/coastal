@@ -38,7 +38,8 @@ public class Instrumenter {
 
         ClassRemapper adapter = new ClassRemapper(ca, remapper);
         cr.accept(adapter, ClassReader.EXPAND_FRAMES);
-        FileOutputStream fos = new FileOutputStream("build/classes/java/main/" + className + ".class");
+        //FileOutputStream fos = new FileOutputStream("build/classes/java/main/" + className + ".class");
+        FileOutputStream fos = new FileOutputStream("bin/main/" + className + ".class");
         fos.write(cw.toByteArray());
         fos.close();
         BufferedWriter out = new BufferedWriter(new FileWriter(".branches", false)); // Only instrumenting a single class so append set to false.

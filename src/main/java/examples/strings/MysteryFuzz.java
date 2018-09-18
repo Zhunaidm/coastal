@@ -7,11 +7,30 @@ public class MysteryFuzz {
 
 	public static void main(String[] args) throws Exception {
 		Scanner sc = new Scanner(new File(args[0]));
-		String word = sc.next();
+		String word = sc.nextLine();
 		sc.close();
 		preserveSomeHtmlTagsAndRemoveWhitespaces(word);
 	}
 
+	static int indexOf(String str, String c, int start) {
+		if (start < 0)
+			start = 0;
+		if (c.length() > str.length())
+			return -1;
+		for (int i = start; i < str.length(); i++) {
+			boolean flag = true;
+			for (int j = 0; j < c.length() && (i+j) < str.length(); j++) {
+			   if (str.charAt(i+j) != c.charAt(j)) {
+				  flag = false;
+				  break;
+			   }
+			}
+			if (flag)
+				return i;
+		}
+		return -1;
+	}
+	
 	public static String preserveSomeHtmlTagsAndRemoveWhitespaces(String body) {
 		if (body == null) {
 			return body;
@@ -26,8 +45,9 @@ public class MysteryFuzz {
 				// Debug.printPC("Current PC: ");
 				// }
 				// throw new RuntimeException("Infinite loop");
-				System.out.println("BUG");
-				return "EXCEPTION: Infinite loop";
+				//System.out.println("BUG");
+				//return "EXCEPTION: Infinite loop";
+				System.exit(0);
 			}
 			old = i;
 			if (body.charAt(i) == '<') {
@@ -38,12 +58,13 @@ public class MysteryFuzz {
 						&& (body.charAt(i + 3) == 'h' || body.charAt(i + 3) == 'H') && (body.charAt(i + 2) == ' ')
 						&& (body.charAt(i + 1) == 'a' || body.charAt(i + 1) == 'A')) {
 					int idx = i + 9;
-					int idx2 = body.indexOf("'", idx);
-					int idxStart = body.indexOf(">", idx2);
-					int idxEnd = body.indexOf("</a>", idxStart);
+					int idx2 = indexOf(body,"'", idx);//body.indexOf("'", idx);
+					int idxStart = indexOf(body, ">", idx2); //body.indexOf(">", idx2);
+					int idxEnd = indexOf(body,"</a>", idxStart); //body.indexOf("</a>", idxStart);
 					if (idxEnd == -1) {
-						idxEnd = body.indexOf("</A>", idxStart);
+						idxEnd = indexOf(body, "</A>", idxStart); //body.indexOf("</A>", idxStart);
 					}
+					
 					i = idxEnd + 4;
 					continue;
 				}

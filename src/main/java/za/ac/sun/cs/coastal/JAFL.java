@@ -66,14 +66,17 @@ public class JAFL {
     private static int runNumber = 0;
     private static int runs = 0;
     private static boolean worstCaseMode = false;
-    private static boolean concolicMode = false;
+    private static boolean concolicMode = true;
     private static int currentOperation = 0;
     private static ByteSet crashingInputs = new ByteSet();
 
+    private static long startTime = 0;
+    
     //For Mystery
     //examples.strings.MysteryFuzz test_mystery.txt
     //examples.strings.DB test.txt
     public static void main(String[] args) throws Exception {
+    		startTime = System.currentTimeMillis();
         if (args.length == 3) {
             System.out.println(args[2]);
             if (args[2].equals("-b")) {
@@ -125,6 +128,7 @@ public class JAFL {
             System.out.println("ASCII: " + input);
             queue.add(new Input(basic, true, input.getScore(), input.getCoastalEvaluated()));
             byte[] temp = Arrays.copyOf(basic, basic.length);
+            
             if (!input.getEvaluated()) {
                 // System.out.println("Performing Bit Flips...\n");
                 currentOperation = 0;
@@ -143,6 +147,7 @@ public class JAFL {
                 currentOperation = 4;
                 replaceInteresting(temp);
             }
+            
             currentOperation = 5;
             havoc(temp);
 
@@ -151,10 +156,11 @@ public class JAFL {
             }            
 
             // Run Coastal
-            if (concolicMode && runNumber != 0 && runNumber % 100 == 0) {
+            if (concolicMode && runNumber != 0 && runNumber % 10 == 0) {
                 // Create a temporary new queue
                 ArrayList<Input> newInputs = new ArrayList<Input>();
                 System.out.println("Startiing coastal...");
+                int didCoastalFindAnything = 0;
                 for (Input qInput : queue) {
                     newInputs.add(new Input(qInput.getData(), qInput.getEvaluated(), qInput.getScore(), true));
                     if (qInput.getCoastalEvaluated()) {continue;}
@@ -170,6 +176,7 @@ public class JAFL {
                     //runCoastal(fuzzInput);
                     runCoastal(Arrays.copyOf(fuzzInput, fuzzInput.length + 5));
                     //System.setOut(original);
+                    
                     System.out.println("COASTAL RAN SUCCESSFULLY");
                     System.out.println("Base Input: " + new String(fuzzInput));
 
@@ -177,41 +184,58 @@ public class JAFL {
                     System.out.println("--------------------------------------------");
                     ArrayList<Byte[]> coastalInputs = Data.getCoastalInputs();
 
+                    
+                    
                     for (Byte[] cInput : coastalInputs) {
-                        System.out.print("Coastal output: ");
-                        byte[] word = new byte[cInput.length];
+                    	
+                    //    System.out.print("Coastal output: ");
+                        byte[] word = new byte[cInput.length+2];
                         int i = 0;
 
                         for (Byte b : cInput) {
-                            System.out.print(" " + b.byteValue());
+                        //    System.out.print(" " + b.byteValue());
                             word[i++] = b.byteValue();
                         }
+                        
+                        
+                        
                        // word = new byte[] {60, 0, 32, 104, 82, 69, 70, 61, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0};
                         System.out.println(" Word: " + new String(word));
                         
-                        System.out.println();
+                       // System.out.println();
 
                         // Execute program with the Coastal input
-                        System.out.println("Executing input...");
+                       // System.out.println("Executing input...");
+                        
                         execProgram(word);
                         System.out.println("Is New? :" + Data.getNew());
                         if (Data.getNew()) {
-                            System.out.println("IT'S NEW");
+                        	   didCoastalFindAnything++;
+                            System.out.println("IT'S NEW " + new String(word));
                             int inputScore = Data.getLocalBucketSize();
+                            
+                         // pad with a few more bytes to help fuzzer a little
+                            Random rrr = new Random();
+                            for (int idx = 0; idx < 2; idx++) {
+                            		word[i++] = (byte)(32+rrr.nextInt(94));
+                            }
+                            
                             newInputs.add(new Input(Arrays.copyOf(word, word.length), false, inputScore, false));
                             Data.resetTuples();
                             paths++;
                         }
                     }
+                    
                     System.out.println("--------------------------------------------");
                     Data.clearCoastalInputs();
 
                 }
             
                 queue = new LinkedList<Input>(newInputs);
-
+                System.out.println("COASTAL USEFUL : " + didCoastalFindAnything);
             }
 
+            
         }
 
     }
@@ -276,16 +300,16 @@ public class JAFL {
                 crashingInputs.add(Arrays.copyOf(base, base.length));
                 saveResult(base, 1);
             }
-            System.out.println("Preventing abort...");
-            // abort = true;
+            System.out.println(e + "Preventing abort...on input " + getStringForBytes(base) + " time = " + (System.currentTimeMillis()-startTime)/1000);
+            abort = true;
         } catch (InvocationTargetException ite) {
             if (ite.getCause() instanceof SystemExitControl.ExitTrappedException) {
                 if (!crashingInputs.containsByteArray(base)) {
                     crashingInputs.add(Arrays.copyOf(base, base.length));
                     saveResult(base, 1);
                 }
-                System.out.println("Preventing abort...");
-                // abort = true;
+                System.out.println(ite + " Preventing abort...on input " + getStringForBytes(base) + " time = " + (System.currentTimeMillis()-startTime)/1000);
+                 abort = true;
             }
 
         } catch (Exception e) {}
@@ -300,6 +324,14 @@ public class JAFL {
         }
 
     }
+    
+    private static String getStringForBytes(byte[] bytes) {
+    		String result = "{";
+    		for (int i = 0; i < bytes.length; i++) {
+    			result += bytes[i] + ",";
+    		}
+    		return result+"}";
+    }
 
     // Run Concolic execution trough Coastal
     private static void runCoastal(byte[] input) throws Exception {
@@ -308,14 +340,14 @@ public class JAFL {
         final Logger log = LogManager.getLogger("COASTAL");
         final Properties props = new Properties();
         // MysteryFuzz
-        props.setProperty("coastal.main", "examples.strings.MysteryFuzz");
+       // props.setProperty("coastal.main", "examples.strings.MysteryFuzz");
         props.setProperty("coastal.targets", "examples.strings");
-        props.setProperty("coastal.triggers", "examples.strings.MysteryFuzz.preserveSomeHtmlTagsAndRemoveWhitespaces(X: String)");
+       // props.setProperty("coastal.triggers", "examples.strings.MysteryFuzz.preserveSomeHtmlTagsAndRemoveWhitespaces(X: String)");
         props.setProperty("coastal.delegates", "java.lang.String:za.ac.sun.cs.coastal.model.String");
         //DeadBeef
-        //props.setProperty("coastal.main", "examples.strings.DB");
+        props.setProperty("coastal.main", "examples.strings.DB");
         //props.setProperty("coastal.targets", "examples.strings");
-        //props.setProperty("coastal.triggers", "examples.strings.DB.analyse(X: String)");
+        props.setProperty("coastal.triggers", "examples.strings.DB.analyse(X: String)");
         
         props.setProperty("coastal.listeners", "za.ac.sun.cs.coastal.listener.control.StopController");
         props.setProperty("coastal.strategy", "za.ac.sun.cs.coastal.strategy.JAFLStrategy");
@@ -378,6 +410,9 @@ public class JAFL {
         int maxScore = 0;
         byte[] winningInput = null;
 
+        if (tuples.isEmpty())
+        	   return;
+        
         for (Tuple tuple : tuples) {
             score = 0;
             if (!evaluatedTuples.contains(tuple)) {
@@ -426,8 +461,8 @@ public class JAFL {
         }
         queue = new LinkedList<Input>(newInputs);
 
-    }
-
+    }    
+    
     // Remove a byte from the byte array.
     public static byte[] removeByte(byte[] base, int index) {
         int count = 0;

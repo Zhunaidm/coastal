@@ -87,6 +87,8 @@ public class JAFLStrategy implements Strategy, ConfigurationListener {
 		totalTime += System.currentTimeMillis() - t0;
 		// return refinement;
 		//System.out.println("Printing input options: " + refinement.size());
+		if (refinement == null)
+			return null;
 		for (Map<String, Constant> entry : refinement) {
 			TreeMap<String, Constant> sortedMap = new TreeMap<String, Constant>(
                             (k1,k2)->{
@@ -171,6 +173,8 @@ public class JAFLStrategy implements Strategy, ConfigurationListener {
                 List<Map<String, Constant>> list = new LinkedList<Map<String, Constant>>();
                 long t;
                 SegmentedPC spc = symbolicState.getSegmentedPathCondition();
+                if (spc == null)
+                	   return null;
                 log.info("explored <{}> {}", spc.getSignature(), spc.getPathCondition().toString());
                 // generate new segmented pcs, all with one conjunct negated:
                 Set<SegmentedPC> altSpcs = new HashSet<>();
