@@ -21,7 +21,7 @@ public class Instrumenter {
     public static void instrument(String inputClassName, String outputClassName) throws Exception {
         // FileInputStream is = new FileInputStream(inputClassName);
         ClassReader cr = new ClassReader(inputClassName);
-        final String className =  outputClassName.replace('.', '/');
+        final String className = outputClassName.replace('.', '/');
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         ClassAdapter ca = new ClassAdapter(cw, cr.getClassName());
         Remapper remapper = new Remapper() {
@@ -41,7 +41,8 @@ public class Instrumenter {
         FileOutputStream fos = new FileOutputStream("build/classes/java/main/" + className + ".class");
         fos.write(cw.toByteArray());
         fos.close();
-        BufferedWriter out = new BufferedWriter(new FileWriter(".branches", false)); // Only instrumenting a single class so append set to false.
+        BufferedWriter out = new BufferedWriter(new FileWriter(".branches", false)); // Only instrumenting a single
+                                                                                     // class so append set to false.
         out.write(cr.getClassName() + ": " + Data.getCounter() + "\n");
         out.flush();
         out.close();

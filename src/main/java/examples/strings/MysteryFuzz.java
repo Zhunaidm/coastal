@@ -7,7 +7,7 @@ public class MysteryFuzz {
 
 	public static void main(String[] args) throws Exception {
 		Scanner sc = new Scanner(new File(args[0]));
-		String word = sc.next();
+		String word = sc.nextLine();
 		sc.close();
 		preserveSomeHtmlTagsAndRemoveWhitespaces(word);
 	}
