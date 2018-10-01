@@ -1,4 +1,3 @@
-
 import java.io.*;
 import java.util.*;
 
@@ -9,20 +8,18 @@ public class DB {
             if (word.charAt(1) == 'e') {
                 if (word.charAt(2) == 'a') {
                     if (word.charAt(3) == 'd') {
-                        if (word.startsWith("help", 4)) {
-                            if (word.charAt(8) == 'b') {
-                                if (word.charAt(9) == 'e') {
-                                    if (word.charAt(10) == 'e') {
-                                         if (word.charAt(11) == 'f') {
-                                            return 1;
-                                        }
+                        if (word.charAt(4) == 'b') {
+                            if (word.charAt(5) == 'e') {
+                                if (word.charAt(6) == 'e') {
+                                    if (word.charAt(7) == 'f') {
+                                        return 1;
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-        }
         } else if (word.charAt(0) == 'f') {
             if (word.charAt(1) == 'u') {
                 if (word.charAt(2) == 'n') {
@@ -44,7 +41,7 @@ public class DB {
     }
 
     public static void main(String[] args) throws Exception {
-        Scanner sc = new Scanner(new File(args[0]));
+        Scanner sc = new Scanner(new File(".temp"));
         String word = sc.nextLine();
         sc.close();
         int r = analyse(word);

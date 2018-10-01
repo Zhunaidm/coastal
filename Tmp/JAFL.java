@@ -337,15 +337,15 @@ public class JAFL {
         //props.setProperty("coastal.triggers", "examples.strings.MysteryFuzz.preserveSomeHtmlTagsAndRemoveWhitespaces(X: String)");
         //props.setProperty("coastal.delegates", "java.lang.String:za.ac.sun.cs.coastal.model.String");
         //DeadBeef
-        //props.setProperty("coastal.main", "examples.strings.DB");
-        //props.setProperty("coastal.targets", "examples.strings");
-        //props.setProperty("coastal.triggers", "examples.strings.DB.analyse(X: String)");
+        //prop.setProperty("coastal.main", "examples.strings.DB");
+        //prop.setProperty("coastal.targets", "examples.strings");
+        //prop.setProperty("coastal.triggers", "examples.strings.DB.analyse(X: String)");
         
-        //props.setProperty("coastal.listeners", "za.ac.sun.cs.coastal.listener.control.StopController");
-        //props.setProperty("coastal.strategy", "JAFLStrategy");
-        //props.setProperty("green.z3.path", "/home/zhunaid/z3/z3-4.7.1-x64-ubuntu-16.04/bin/z3");
+       //prop.setProperty("coastal.listeners", "za.ac.sun.cs.coastal.listener.control.StopController");
+        //prop.setProperty("coastal.strategy", "za.ac.sun.cs.coastal.strategy.JAFLStrategy");
+        //prop.setProperty("green.z3.path", "/home/zhunaid/z3/z3-4.7.1-x64-ubuntu-16.04/bin/z3");
         //props.setProperty("green.z3.path", "/Users/visserw/Documents/tools/z3-master/bin/z3");
-        //props.setProperty("coastal.echooutput", "false");
+        //prop.setProperty("coastal.echooutput", "false");
 
         final String version = "coastal-test";
         final ReporterManager reporterManager = new ReporterManager();
