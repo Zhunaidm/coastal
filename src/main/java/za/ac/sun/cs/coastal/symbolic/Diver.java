@@ -120,7 +120,7 @@ public class Diver implements Reporter {
 				System.setOut(NUL);
 				System.setErr(NUL);
 			}
-			meth.invoke(null, (Object) (new String[] { ".temp" }));
+			meth.invoke(null, (Object) (new String[] {configuration.getArgs()}));
 			System.setOut(out);
 			System.setErr(err);
 		} catch (ClassNotFoundException x) {

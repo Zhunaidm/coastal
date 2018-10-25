@@ -17,7 +17,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import za.ac.sun.cs.coastal.Configuration;
-import za.ac.sun.cs.coastal.Data;
 import za.ac.sun.cs.coastal.listener.ConfigurationListener;
 import za.ac.sun.cs.coastal.symbolic.SegmentedPC;
 import za.ac.sun.cs.coastal.symbolic.SegmentedPCIf;
@@ -47,9 +46,12 @@ public class JAFLStrategy implements Strategy, ConfigurationListener {
 
 	private long totalTime = 0, solverTime = 0, pathTreeTime = 0, modelExtractionTime = 0;
 
+	private static ArrayList<Byte[]> coastalInputs = new ArrayList<Byte[]>();
+
 	public JAFLStrategy() {
 		// We expect configurationLoaded(...) to be called shortly.
 		// This will initialize this instance.
+		coastalInputs = new ArrayList<Byte[]>();
 	}
 
 	@Override
@@ -86,25 +88,27 @@ public class JAFLStrategy implements Strategy, ConfigurationListener {
 		List<Map<String, Constant>> refinement = refine0(symbolicState);
 		totalTime += System.currentTimeMillis() - t0;
 		// return refinement;
-		//System.out.println("Printing input options: " + refinement.size());
+		// System.out.println("Printing input options: " + refinement.size());
 		for (Map<String, Constant> entry : refinement) {
-			TreeMap<String, Constant> sortedMap = new TreeMap<String, Constant>(
-                            (k1,k2)->{
-            			final int k1_id = Integer.parseInt(k1.substring(k1.lastIndexOf('_')+1));
-            			final int k2_id = Integer.parseInt(k2.substring(k2.lastIndexOf('_')+1));
-            			return k1_id - k2_id;
-            		     }
-                        );
+			TreeMap<String, Constant> sortedMap = new TreeMap<String, Constant>((k1, k2) -> {
+				final int k1_id = Integer.parseInt(k1.substring(k1.lastIndexOf('_') + 1));
+				final int k2_id = Integer.parseInt(k2.substring(k2.lastIndexOf('_') + 1));
+				return k1_id - k2_id;
+			});
 			sortedMap.putAll(entry);
-			//System.out.println("Input -> ");
+			// System.out.println("Input -> ");
 			ArrayList<Byte> baos = new ArrayList<Byte>();
 			for (Map.Entry<String, Constant> e : sortedMap.entrySet()) {
-				//System.out.println(e.getKey() + " -> " + e.getValue());
+				// System.out.println(e.getKey() + " -> " + e.getValue());
 				baos.add((byte) Integer.parseInt(e.getValue().toString()));
 			}
-			Data.addCoastalInput(baos.toArray(new Byte[baos.size()]));
+			coastalInputs.add(baos.toArray(new Byte[baos.size()]));
 		}
 		return null;
+	}
+
+	public static ArrayList<Byte[]> getCoastalInputs() {
+		return coastalInputs;
 	}
 
 	private List<Map<String, Constant>> refine10(SymbolicState symbolicState) {
@@ -167,60 +171,60 @@ public class JAFLStrategy implements Strategy, ConfigurationListener {
 		}
 	}
 
-        private List<Map<String, Constant>> refine0(SymbolicState symbolicState) {
-                List<Map<String, Constant>> list = new LinkedList<Map<String, Constant>>();
-                long t;
-                SegmentedPC spc = symbolicState.getSegmentedPathCondition();
-                log.info("explored <{}> {}", spc.getSignature(), spc.getPathCondition().toString());
-                // generate new segmented pcs, all with one conjunct negated:
-                Set<SegmentedPC> altSpcs = new HashSet<>();
-                for (SegmentedPC pointer = spc; pointer != null; pointer = pointer.getParent()) {
-                        altSpcs.add(generateAltSpc(spc, pointer));
-                }
-                //return null;
-                boolean infeasible = false;
-                for (SegmentedPC thePC : altSpcs) {
-                        Expression pc = thePC.getPathCondition();
-                        String sig = spc.getSignature();
-                        log.info("trying   <{}> {}", sig, pc.toString());
-                        Instance instance = new Instance(green, null, pc);
-                        Map<IntVariable, IntConstant> model = (Map<IntVariable, IntConstant>) instance.request("model");
-                        if (model == null) {
-                                log.info("no model");
-                                log.trace("(The spc is {})", spc.getPathCondition().toString());
-                        } else {
-                                Map<String, Constant> newModel = new HashMap<>();
-                                for (IntVariable variable : model.keySet()) {
-                                        String name = variable.getName();
-                                        if (name.startsWith(SymbolicState.NEW_VAR_PREFIX)) {
-                                                continue;
-                                        }
-                                        Constant value = model.get(variable);
-                                        newModel.put(name, value);
-                                }
-                                String modelString = newModel.toString();
-                                log.info("new model: {}", modelString);
-                                if (visitedModels.add(modelString)) {
-                                        list.add(newModel);
-                                } else {
-                                        log.info("model {} has been visited before, retrying", modelString);
-                                }
-                        }
-                }
-                return list;
-        }
+	private List<Map<String, Constant>> refine0(SymbolicState symbolicState) {
+		List<Map<String, Constant>> list = new LinkedList<Map<String, Constant>>();
+		long t;
+		SegmentedPC spc = symbolicState.getSegmentedPathCondition();
+		log.info("explored <{}> {}", spc.getSignature(), spc.getPathCondition().toString());
+		// generate new segmented pcs, all with one conjunct negated:
+		Set<SegmentedPC> altSpcs = new HashSet<>();
+		for (SegmentedPC pointer = spc; pointer != null; pointer = pointer.getParent()) {
+			altSpcs.add(generateAltSpc(spc, pointer));
+		}
+		// return null;
+		boolean infeasible = false;
+		for (SegmentedPC thePC : altSpcs) {
+			Expression pc = thePC.getPathCondition();
+			String sig = spc.getSignature();
+			log.info("trying   <{}> {}", sig, pc.toString());
+			Instance instance = new Instance(green, null, pc);
+			Map<IntVariable, IntConstant> model = (Map<IntVariable, IntConstant>) instance.request("model");
+			if (model == null) {
+				log.info("no model");
+				log.trace("(The spc is {})", spc.getPathCondition().toString());
+			} else {
+				Map<String, Constant> newModel = new HashMap<>();
+				for (IntVariable variable : model.keySet()) {
+					String name = variable.getName();
+					if (name.startsWith(SymbolicState.NEW_VAR_PREFIX)) {
+						continue;
+					}
+					Constant value = model.get(variable);
+					newModel.put(name, value);
+				}
+				String modelString = newModel.toString();
+				log.info("new model: {}", modelString);
+				if (visitedModels.add(modelString)) {
+					list.add(newModel);
+				} else {
+					log.info("model {} has been visited before, retrying", modelString);
+				}
+			}
+		}
+		return list;
+	}
 
-        private SegmentedPC generateAltSpc(SegmentedPC spc, SegmentedPC pointer) {
-                SegmentedPC parent = null;
-                boolean value = ((SegmentedPCIf) spc).getValue();
-                if (spc == pointer) {
-                        parent = spc.getParent();
-                        value = !value;
-                } else {
-                        parent = generateAltSpc(spc.getParent(), pointer);
-                }
-                return new SegmentedPCIf(parent, spc.getExpression(), spc.getPassiveConjunct(), value);
-        }
+	private SegmentedPC generateAltSpc(SegmentedPC spc, SegmentedPC pointer) {
+		SegmentedPC parent = null;
+		boolean value = ((SegmentedPCIf) spc).getValue();
+		if (spc == pointer) {
+			parent = spc.getParent();
+			value = !value;
+		} else {
+			parent = generateAltSpc(spc.getParent(), pointer);
+		}
+		return new SegmentedPCIf(parent, spc.getExpression(), spc.getPassiveConjunct(), value);
+	}
 
 	// ======================================================================
 	//

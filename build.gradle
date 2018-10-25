@@ -6,7 +6,7 @@ plugins {
 	//id 'checkstyle'
 }
 
-mainClassName = 'za.ac.sun.cs.coastal.JAFL'
+mainClassName = 'za.ac.sun.cs.coastal.COASTAL'
 
 repositories {
 	jcenter()
@@ -25,7 +25,7 @@ dependencies {
 }
 
 //checkstyle {
-//	toolVersion '8.1'
+	//toolVersion '8.1'
 //}
 
 version = gitVersion()
